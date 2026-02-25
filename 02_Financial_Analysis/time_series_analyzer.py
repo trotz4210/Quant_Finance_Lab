@@ -39,61 +39,81 @@ def load_data_from_db(ticker: str) -> pd.DataFrame:
         logging.error(f"Error loading data for {ticker} from database: {e}")
     return df
 
-def analyze_returns(ticker: str, data: pd.DataFrame):
+def analyze_returns_multi(tickers: list, data_dict: dict):
     """
-    주식 수익률을 계산하고, 정규성 및 자기상관을 분석합니다.
+    여러 종목의 수익률을 함께 분석하고 비교합니다.
     """
-    if data.empty:
-        logging.warning(f"No data to analyze for {ticker}.")
+    # 데이터 검증
+    valid_tickers = [t for t in tickers if not data_dict[t].empty]
+    if not valid_tickers:
+        logging.warning("No valid data to analyze.")
         return
 
-    # 일일 수익률 계산 (로그 수익률 사용)
-    # Close 컬럼이 없으면 에러 발생 가능성 있으므로 확인
-    if 'Close' not in data.columns:
-        logging.error(f"'Close' column not found in data for {ticker}.")
+    logging.info(f"Analyzing returns for {valid_tickers} (Total {len(valid_tickers)} tickers).")
+
+    # 1. 수익률 계산
+    returns_dict = {}
+    for ticker in valid_tickers:
+        if 'Close' not in data_dict[ticker].columns:
+            logging.error(f"'Close' column not found in data for {ticker}.")
+            continue
+        returns = data_dict[ticker]['Close'].pct_change().dropna()
+        if not returns.empty:
+            returns_dict[ticker] = returns
+
+    if not returns_dict:
+        logging.warning("No valid returns data.")
         return
 
-    returns = data['Close'].pct_change().dropna()
-    # returns = np.log(data['Close'] / data['Close'].shift(1)).dropna() # 로그 수익률
+    # 2. 하나의 figure에 모든 그래프를 배치 (각 티커마다 3개 subplot: histogram, Q-Q, ACF)
+    num_tickers = len(returns_dict)
+    fig, axes = plt.subplots(num_tickers, 3, figsize=(16, 4.5 * num_tickers))
+    
+    # 티커가 1개일 때 axes 형태 조정
+    if num_tickers == 1:
+        axes = axes.reshape(1, -1)
+    
+    for idx, (ticker, returns) in enumerate(returns_dict.items()):
+        # 0열: 수익률 분포 (히스토그램)
+        ax = axes[idx, 0]
+        ax.hist(returns, bins=40, edgecolor='black', alpha=0.7)
+        ax.set_title(f'{ticker} Daily Returns', fontsize=10)
+        ax.set_xlabel('Daily Return', fontsize=9)
+        ax.set_ylabel('Frequency', fontsize=9)
+        ax.tick_params(labelsize=8)
+        ax.grid(alpha=0.3)
 
-    if returns.empty:
-        logging.warning(f"No returns to analyze for {ticker}.")
-        return
+        # 1열: Q-Q 플롯 (정규성 검정)
+        ax = axes[idx, 1]
+        stats.probplot(returns, dist="norm", plot=ax)
+        ax.set_title(f'{ticker} Q-Q Plot', fontsize=10)
+        ax.tick_params(labelsize=8)
+        ax.grid(alpha=0.3)
 
-    logging.info(f"Analyzing returns for {ticker} (Total {len(returns)} data points).")
+        # 2열: ACF 플롯 (자기상관)
+        ax = axes[idx, 2]
+        sm.graphics.tsa.plot_acf(returns, lags=30, ax=ax)
+        ax.set_title(f'{ticker} ACF', fontsize=10)
+        ax.tick_params(labelsize=8)
+        ax.grid(alpha=0.3)
 
-    # 1. 수익률 분포 시각화 (히스토그램)
-    plt.figure(figsize=(15, 5))
-    plt.subplot(1, 3, 1)
-    sns.histplot(returns, kde=True, bins=50)
-    plt.title(f'{ticker} Daily Returns Distribution')
-    plt.xlabel('Daily Return')
-    plt.ylabel('Frequency')
-
-    # 2. Q-Q 플롯을 통한 정규성 검정
-    plt.subplot(1, 3, 2)
-    stats.probplot(returns, dist="norm", plot=plt)
-    plt.title(f'{ticker} Q-Q Plot (Normality Test)')
-
-    # 3. 자기상관 함수 (ACF) 플롯
-    plt.subplot(1, 3, 3)
-    sm.graphics.tsa.plot_acf(returns, lags=30, ax=plt.gca())
-    plt.title(f'{ticker} Autocorrelation Function (ACF)')
-
-    plt.tight_layout()
+    # 간격 조정: hspace와 wspace를 명시적으로 설정
+    plt.subplots_adjust(hspace=0.4, wspace=0.35, left=0.08, right=0.95, top=0.95, bottom=0.08)
     plt.show()
 
 if __name__ == "__main__":
-    target_ticker = "AAPL" # 분석할 종목 선택
-    logging.info(f"--- Starting Time Series Analysis for {target_ticker} ---")
+    # 분석할 종목 리스트
+    target_tickers = ["AAPL", "MSFT", "TSLA", "SPY"]
+    
+    logging.info(f"--- Starting Time Series Analysis for {target_tickers} ---")
 
     # 1. 데이터 로드
-    stock_data = load_data_from_db(target_ticker)
+    data_dict = {}
+    for ticker in target_tickers:
+        stock_data = load_data_from_db(ticker)
+        data_dict[ticker] = stock_data
 
-    # 2. 수익률 분석 및 시각화
-    if not stock_data.empty:
-        analyze_returns(target_ticker, stock_data)
-    else:
-        logging.error(f"Failed to load data for {target_ticker}. Cannot proceed with analysis.")
+    # 2. 수익률 분석 및 시각화 (함께 표시)
+    analyze_returns_multi(target_tickers, data_dict)
 
-    logging.info(f"--- Time Series Analysis for {target_ticker} Completed ---")
+    logging.info(f"--- Time Series Analysis for {target_tickers} Completed ---")
