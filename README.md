@@ -6,6 +6,7 @@
 ## 0. Project Architecture
 
 ```mermaid
+%%{init: {'theme': 'base', 'securityLevel': 'loose'}}%%
 graph LR
     A["📡 Data Collection<br/>yfinance API"] 
     B["🗄️ Database<br/>SQLite"]
@@ -50,6 +51,7 @@ graph LR
 
 ### 모듈 간 의존성
 ```mermaid
+%%{init: {'theme': 'base', 'securityLevel': 'loose'}}%%
 graph TB
     DC["<b>01_Data_Engineering</b><br/>data_collector.py<br/>database_manager.py"]
     FA["<b>02_Financial_Analysis</b><br/>analyzer_engine.py<br/>time_series_analyzer.py"]
@@ -110,6 +112,7 @@ Quant-Finance-Lab/
 분석 엔진(`analyzer_engine.py`)은 다음과 같이 병렬 처리로 각 종목을 분석합니다:
 
 ```mermaid
+%%{init: {'theme': 'base', 'securityLevel': 'loose'}}%%
 graph LR
     Input["📥 입력: DataFrame<br/>Date, Close"]
     
