@@ -32,6 +32,10 @@ def fetch_stock_data(ticker, start, end):
         logging.warning(f"No data downloaded for {ticker}. It might be delisted or the ticker is incorrect.")
         return None
     
+    # MultiIndex 컬럼명을 단순 컬럼명으로 변환 (첫 번째 레벨 사용: Open, High, Low, Close, Volume)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    
     # 데이터 정제: 결측치 확인
     if df.isnull().values.any():
         logging.warning(f"NaN values found in {ticker} data. Applying forward-fill.")
