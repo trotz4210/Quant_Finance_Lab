@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시계열 분석</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-content">
+                <h1>시계열 분석</h1>
+            </div>
+        </header>
+
+        <main class="main" id="container"></main>
+
+        <footer class="footer">
+            <span>업데이트: <span id="updateTime">-</span></span>
+            <button id="refreshBtn" class="refresh-btn">새로고침</button>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
