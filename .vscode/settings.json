@@ -1,0 +1,6 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/01_Data_Engineering",
+    "${workspaceFolder}/02_Financial_Analysis"
+  ]
+}

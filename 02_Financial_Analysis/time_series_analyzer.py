@@ -1,19 +1,24 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import logging
 import os
 from scipy import stats
 import statsmodels.api as sm
 
-# Import DatabaseManager from 01_Data_Engineering
+# Import from other modules
 import sys
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_ENG_PATH = PROJECT_ROOT / "01_Data_Engineering"
-if str(DATA_ENG_PATH) not in sys.path:
-    sys.path.insert(0, str(DATA_ENG_PATH))
+DATA_ENG_PATH = str(PROJECT_ROOT / "01_Data_Engineering")
+ANALYSIS_PATH = str(PROJECT_ROOT / "02_Financial_Analysis")
+
+if DATA_ENG_PATH not in sys.path:
+    sys.path.insert(0, DATA_ENG_PATH)
+if ANALYSIS_PATH not in sys.path:
+    sys.path.insert(0, ANALYSIS_PATH)
+
 from database_manager import DatabaseManager
+from analyzer_engine import TimeSeriesAnalyzer
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,7 +46,8 @@ def load_data_from_db(ticker: str) -> pd.DataFrame:
 
 def analyze_returns_multi(tickers: list, data_dict: dict):
     """
-    여러 종목의 수익률을 함께 분석하고 비교합니다.
+    여러 종목의 수익률을 함께 분석하고 시각화합니다.
+    (분석 로직은 analyzer_engine.py를 사용)
     """
     # 데이터 검증
     valid_tickers = [t for t in tickers if not data_dict[t].empty]

@@ -10,11 +10,18 @@ const TICKER_COLORS = {
 // ===== 데이터 로드 =====
 async function loadData() {
     try {
+        console.log("API 호출 시작: /api/data");
         const response = await fetch('/api/data');
+        console.log("API 응답 상태:", response.status);
+        
         if (!response.ok) {
-            throw new Error('API 호출 실패');
+            const error = await response.text();
+            console.error("API 오류:", response.status, error);
+            throw new Error(`API 호출 실패: ${response.status}`);
         }
+        
         chartData = await response.json();
+        console.log("데이터 로드 완료:", chartData);
         buildUI();
         renderAll();
         return true;
@@ -40,49 +47,50 @@ function buildUI() {
         section.id = `section-${ticker}`;
 
         section.innerHTML = `
-            <h2>${ticker}</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">평균</span>
-                    <span class="stat-value stat-mean" data-ticker="${ticker}">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">변동성</span>
-                    <span class="stat-value stat-std" data-ticker="${ticker}">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">최소</span>
-                    <span class="stat-value stat-min" data-ticker="${ticker}">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">최대</span>
-                    <span class="stat-value stat-max" data-ticker="${ticker}">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">왜도</span>
-                    <span class="stat-value stat-skew" data-ticker="${ticker}">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">첨도</span>
-                    <span class="stat-value stat-kurt" data-ticker="${ticker}">-</span>
-                </div>
+            <div class="ticker-header">
+                <h2>${ticker}</h2>
             </div>
-            <div class="charts-row">
-                <div class="chart-item">
-                    <div class="chart-title">가격</div>
-                    <div id="priceChart-${ticker}" class="chart"></div>
+            <div class="ticker-content">
+                <div class="stats-insights">
+                    <table class="stats-table">
+                        <tr>
+                            <td class="stat-label">평균</td>
+                            <td class="stat-value stat-mean" data-ticker="${ticker}">-</td>
+                            <td class="stat-label">변동성</td>
+                            <td class="stat-value stat-std" data-ticker="${ticker}">-</td>
+                            <td class="stat-label">최소</td>
+                            <td class="stat-value stat-min" data-ticker="${ticker}">-</td>
+                            <td class="stat-label">최대</td>
+                            <td class="stat-value stat-max" data-ticker="${ticker}">-</td>
+                        </tr>
+                        <tr>
+                            <td class="stat-label">왜도</td>
+                            <td class="stat-value stat-skew" data-ticker="${ticker}">-</td>
+                            <td class="stat-label">첨도</td>
+                            <td class="stat-value stat-kurt" data-ticker="${ticker}">-</td>
+                            <td colspan="4" class="jb-result" data-ticker="${ticker}">-</td>
+                        </tr>
+                    </table>
+                    <div class="insights-compact">
+                        <div class="insight-row">
+                            <span class="insight-label">왜도:</span>
+                            <span class="skewness-interpretation" data-ticker="${ticker}">-</span>
+                        </div>
+                        <div class="insight-row">
+                            <span class="insight-label">첨도:</span>
+                            <span class="kurtosis-interpretation" data-ticker="${ticker}">-</span>
+                        </div>
+                        <div class="insight-row">
+                            <span class="insight-label">VaR(95%):</span>
+                            <span class="risk-insight" data-ticker="${ticker}">-</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="chart-item">
-                    <div class="chart-title">분포</div>
-                    <div id="histogramChart-${ticker}" class="chart"></div>
-                </div>
-                <div class="chart-item">
-                    <div class="chart-title">Q-Q</div>
-                    <div id="qqChart-${ticker}" class="chart"></div>
-                </div>
-                <div class="chart-item">
-                    <div class="chart-title">ACF</div>
-                    <div id="acfChart-${ticker}" class="chart"></div>
+                <div class="charts-compact">
+                    <div class="chart-item"><div id="priceChart-${ticker}" class="chart"></div></div>
+                    <div class="chart-item"><div id="histogramChart-${ticker}" class="chart"></div></div>
+                    <div class="chart-item"><div id="qqChart-${ticker}" class="chart"></div></div>
+                    <div class="chart-item"><div id="acfChart-${ticker}" class="chart"></div></div>
                 </div>
             </div>
         `;
@@ -102,6 +110,30 @@ function updateStats(ticker) {
     document.querySelector(`.stat-max[data-ticker="${ticker}"]`).textContent = (stats.max * 100).toFixed(2) + '%';
     document.querySelector(`.stat-skew[data-ticker="${ticker}"]`).textContent = stats.skewness.toFixed(3);
     document.querySelector(`.stat-kurt[data-ticker="${ticker}"]`).textContent = stats.kurtosis.toFixed(3);
+
+    // 정규성 검정 결과 (간결하게)
+    if (stats.normalcy_test) {
+        const jbTest = stats.normalcy_test;
+        const resultText = jbTest.is_normal ? '✓ 정규' : '✗ 비정규';
+        document.querySelector(`.jb-result[data-ticker="${ticker}"]`).textContent = `${resultText} (p=${jbTest.p_value_str})`;
+    }
+
+    // 왜도/첨도 해석 (간결하게)
+    if (stats.skewness_interpretation) {
+        document.querySelector(`.skewness-interpretation[data-ticker="${ticker}"]`).textContent = stats.skewness_interpretation;
+    }
+
+    if (stats.kurtosis_interpretation) {
+        document.querySelector(`.kurtosis-interpretation[data-ticker="${ticker}"]`).textContent = stats.kurtosis_interpretation;
+    }
+
+    // 위험도 지표 (간결하게, 한줄)
+    if (stats.risk) {
+        const varText = (stats.risk.var_95 * 100).toFixed(1) + '%';
+        const sharpeText = stats.risk.sharpe_ratio.toFixed(3);
+        const riskText = `VaR95%: ${varText} | Sharpe: ${sharpeText}`;
+        document.querySelector(`.risk-insight[data-ticker="${ticker}"]`).textContent = riskText;
+    }
 }
 
 // ===== 차트 렌더링 =====
@@ -117,19 +149,19 @@ function renderPriceChart(ticker) {
         type: 'scatter',
         mode: 'lines',
         name: ticker,
-        line: { color, width: 1 },
+        line: { color, width: 0.8 },
         fill: 'tozeroy',
         fillcolor: color + '20'
     };
 
     const layout = {
-        margin: { l: 30, r: 10, t: 5, b: 30 },
+        margin: { l: 20, r: 5, t: 2, b: 15 },
         hovermode: 'x unified',
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'white',
-        font: { family: 'Arial, sans-serif', size: 9 },
-        xaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' },
-        yaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' }
+        font: { family: 'Arial, sans-serif', size: 7 },
+        xaxis: { showgrid: false },
+        yaxis: { showgrid: true, gridwidth: 0.3, gridcolor: '#f0f0f0' }
     };
 
     Plotly.newPlot(`priceChart-${ticker}`, [trace], layout, { responsive: true, displayModeBar: false });
@@ -148,17 +180,17 @@ function renderHistogram(ticker) {
         marker: {
             color,
             opacity: 0.75,
-            line: { color, width: 0.5 }
+            line: { color, width: 0.3 }
         }
     };
 
     const layout = {
-        margin: { l: 30, r: 10, t: 5, b: 30 },
+        margin: { l: 20, r: 5, t: 2, b: 15 },
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'white',
-        font: { family: 'Arial, sans-serif', size: 9 },
-        xaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' },
-        yaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' }
+        font: { family: 'Arial, sans-serif', size: 7 },
+        xaxis: { showgrid: false },
+        yaxis: { showgrid: true, gridwidth: 0.3, gridcolor: '#f0f0f0' }
     };
 
     Plotly.newPlot(`histogramChart-${ticker}`, [trace], layout, { responsive: true, displayModeBar: false });
@@ -175,7 +207,7 @@ function renderQQPlot(ticker) {
         y: qqData.sample,
         mode: 'markers',
         name: '',
-        marker: { color, size: 4, opacity: 0.7 }
+        marker: { color, size: 2.5, opacity: 0.7 }
     };
 
     const minVal = Math.min(...qqData.theoretical);
@@ -185,7 +217,7 @@ function renderQQPlot(ticker) {
         y: [minVal, maxVal],
         mode: 'lines',
         name: '',
-        line: { color: '#bdc3c7', width: 1, dash: 'dash' }
+        line: { color: '#bdc3c7', width: 0.8, dash: 'dash' }
     };
 
     const yMin = Math.min(...qqData.sample);
@@ -194,14 +226,14 @@ function renderQQPlot(ticker) {
     const yPadding = yRange * 0.1;
 
     const layout = {
-        margin: { l: 30, r: 10, t: 5, b: 30 },
+        margin: { l: 20, r: 5, t: 2, b: 15 },
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'white',
-        font: { family: 'Arial, sans-serif', size: 9 },
+        font: { family: 'Arial, sans-serif', size: 7 },
         showlegend: false,
-        xaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' },
-        yaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1', range: [yMin - yPadding, yMax + yPadding] }
+        xaxis: { showgrid: false },
+        yaxis: { showgrid: true, gridwidth: 0.3, gridcolor: '#f0f0f0', range: [yMin - yPadding, yMax + yPadding] }
     };
 
     Plotly.newPlot(`qqChart-${ticker}`, [sample, reference], layout, { responsive: true, displayModeBar: false });
@@ -218,7 +250,7 @@ function renderACFPlot(ticker) {
         x: lags,
         y: acf,
         type: 'bar',
-        marker: { color, opacity: 0.75, line: { color, width: 0.5 } }
+        marker: { color, opacity: 0.75, line: { color, width: 0.3 } }
     };
 
     const confidenceInterval = 1.96 / Math.sqrt(1000);
@@ -239,13 +271,13 @@ function renderACFPlot(ticker) {
     };
 
     const layout = {
-        margin: { l: 30, r: 10, t: 5, b: 30 },
+        margin: { l: 20, r: 5, t: 2, b: 15 },
         hovermode: 'x unified',
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'white',
-        font: { family: 'Arial, sans-serif', size: 9 },
-        xaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' },
-        yaxis: { showgrid: true, gridwidth: 0.5, gridcolor: '#ecf0f1' }
+        font: { family: 'Arial, sans-serif', size: 7 },
+        xaxis: { showgrid: false },
+        yaxis: { showgrid: true, gridwidth: 0.3, gridcolor: '#f0f0f0' }
     };
 
     Plotly.newPlot(`acfChart-${ticker}`, [trace, upperBound, lowerBound], layout, { responsive: true, displayModeBar: false });

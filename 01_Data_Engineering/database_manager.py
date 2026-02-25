@@ -54,3 +54,22 @@ class DatabaseManager:
             logging.info(f"Successfully saved {len(df)} rows to table '{table_name}'.")
         except Exception as e:
             logging.error(f"Error saving dataframe to table '{table_name}': {e}")
+
+    def read_dataframe(self, table_name: str):
+        """
+        데이터베이스 테이블을 DataFrame으로 읽어옵니다.
+
+        :param table_name: 읽을 테이블의 이름
+        :return: 읽어온 DataFrame, 테이블이 없으면 None
+        """
+        if self.conn is None:
+            logging.error("Database connection is not open. Use 'with' statement.")
+            return None
+
+        try:
+            df = pd.read_sql_query(f"SELECT * FROM {table_name}", self.conn)
+            logging.info(f"Successfully read {len(df)} rows from table '{table_name}'.")
+            return df
+        except Exception as e:
+            logging.error(f"Error reading table '{table_name}': {e}")
+            return None

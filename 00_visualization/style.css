@@ -7,9 +7,9 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: white;
+    background: #f5f5f5;
     color: #333;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 /* ===== 레이아웃 ===== */
@@ -22,110 +22,150 @@ body {
 .header {
     background: #2c3e50;
     color: white;
-    padding: 12px 15px;
-    border-bottom: 1px solid #ddd;
+    padding: 8px 12px;
+    border-bottom: 1px solid #999;
 }
 
 .header-content h1 {
-    font-size: 1.3em;
+    font-size: 1.1em;
     font-weight: 600;
 }
 
 .main {
     flex: 1;
-    padding: 10px 15px;
+    padding: 8px 12px;
 }
 
-/* ===== 종목 섹션 ===== */
+/* ===== 종목 섹션 (오밀조밀 레이아웃) ===== */
 .ticker-section {
-    margin-bottom: 15px;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 15px;
-}
-
-.ticker-section h2 {
-    font-size: 1.1em;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 8px;
-}
-
-/* ===== 통계 ===== */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 12px;
-}
-
-.stat-card {
-    background: #f9f9f9;
+    background: white;
     border: 1px solid #ddd;
     border-radius: 3px;
-    padding: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.ticker-header {
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+    padding: 4px 6px;
+}
+
+.ticker-header h2 {
+    font-size: 0.95em;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.ticker-content {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr;
+    gap: 0;
+    padding: 6px;
+}
+
+/* ===== 통계 + 인사이트 섹션 ===== */
+.stats-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8em;
+}
+
+.stats-table td {
+    padding: 2px 4px;
+    border: 0.5px solid #e0e0e0;
     text-align: center;
 }
 
-.stat-label {
-    display: block;
-    font-size: 0.75em;
+.stats-table .stat-label {
+    background: #f9f9f9;
+    font-weight: 600;
     color: #666;
-    margin-bottom: 3px;
-    font-weight: 500;
+    text-align: left;
+    padding: 2px 3px;
 }
 
-.stat-value {
-    display: block;
-    font-size: 0.95em;
-    font-weight: 700;
-    color: #3498db;
+.stats-table .stat-value {
+    font-weight: 600;
+    color: #2980b9;
 }
 
-/* ===== 차트 행 ===== */
-.charts-row {
+.jb-result {
+    background: #f0f8ff;
+    font-size: 0.75em;
+    color: #27ae60;
+    padding: 2px 3px !important;
+}
+
+/* ===== 컴팩트 인사이트 ===== */
+.insights-compact {
+    background: #f9f9f9;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 2px;
+    padding: 3px 4px;
+}
+
+.insight-row {
+    display: flex;
+    gap: 4px;
+    padding: 1px 0;
+    font-size: 0.75em;
+    line-height: 1.2;
+}
+
+.insight-label {
+    font-weight: 600;
+    color: #555;
+    min-width: 45px;
+}
+
+.insight-row span:last-child {
+    color: #666;
+    flex: 1;
+}
+
+/* ===== 컴팩트 차트 그리드 ===== */
+.charts-compact {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
 }
 
 .chart-item {
     background: white;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    padding: 6px;
-}
-
-.chart-title {
-    font-size: 0.85em;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 4px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 3px;
+    border: 0.5px solid #ddd;
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .chart {
-    min-height: 200px;
     width: 100%;
+    height: 100px;
 }
 
 /* ===== 푸터 ===== */
 .footer {
     background: #f5f5f5;
     border-top: 1px solid #ddd;
-    padding: 10px 15px;
+    padding: 6px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.85em;
+    font-size: 0.8em;
 }
 
 .refresh-btn {
-    padding: 5px 10px;
+    padding: 4px 8px;
     background: #3498db;
     color: white;
     border: none;
-    border-radius: 3px;
+    border-radius: 2px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85em;
@@ -134,31 +174,4 @@ body {
 
 .refresh-btn:hover {
     background: #2980b9;
-}
-
-/* ===== 반응형 ===== */
-@media (max-width: 1200px) {
-    .charts-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .charts-row {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .chart {
-        min-height: 150px;
-    }
 }

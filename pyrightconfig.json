@@ -1,0 +1,8 @@
+{
+  "include": [
+    "00_visualization",
+    "01_Data_Engineering",
+    "02_Financial_Analysis"
+  ],
+  "pythonVersion": "3.8"
+}
