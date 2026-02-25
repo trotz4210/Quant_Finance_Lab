@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>시계열 분석</title>
+    <title>시계열 분석 및 팩터 모델링</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -11,11 +11,22 @@
     <div class="app">
         <header class="header">
             <div class="header-content">
-                <h1>시계열 분석</h1>
+                <h1>시계열 분석 및 팩터 모델링</h1>
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-tab="analysis">시계열 분석</button>
+                    <button class="nav-tab" data-tab="factors">팩터 모델링</button>
+                </div>
             </div>
         </header>
 
-        <main class="main" id="container"></main>
+        <main class="main">
+            <div class="tab-content" id="analysis-tab">
+                <div id="timeseries-container"></div>
+            </div>
+            <div class="tab-content hidden" id="factors-tab">
+                <div id="factors-container"></div>
+            </div>
+        </main>
 
         <footer class="footer">
             <span>업데이트: <span id="updateTime">-</span></span>

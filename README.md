@@ -84,6 +84,10 @@ Quant-Finance-Lab/
 │
 ├── 02_Financial_Analysis/  # 📊 분석 엔진
 │   ├── analyzer_engine.py          # TimeSeriesAnalyzer + InsightGenerator
+│   ├── factor_model.py             # Fama-French 3-Factor 모델
+│   │   ├── FamaFrenchFactorBuilder 팩터 생성
+│   │   ├── FamaFrenchRegression    회귀분석
+│   │   └── FamaFrenchAnalyzer      통합 분석
 │   ├── time_series_analyzer.py     # 로컬 테스트용 시각화
 │   └── __init__.py                 # 패키지 모듈
 │
@@ -185,7 +189,12 @@ graph LR
   - 왜도(Skewness) 자동 해석: 극단 수익률 방향 분석
   - 첨도(Kurtosis) 자동 해석: 극한 사건 발생 확률 평가
   - 위험도 지표: 95% VaR (일일 손실 확률), Sharpe Ratio (위험조정 수익률)
-- [ ] **팩터 모델링:** `statsmodels`를 이용한 Fama-French 3-Factor 모델 구현 및 회귀분석
+- [x] **팩터 모델링:** `statsmodels`를 이용한 Fama-French 3-Factor 모델 구현 및 회귀분석
+  - `factor_model.py` 모듈: FamaFrenchAnalyzer, FamaFrenchRegression, FamaFrenchFactorBuilder 클래스
+  - 개별 자산의 알파(α), 베타(β_mkt, β_smb, β_hml), R² 계산
+  - 포트폴리오 수준의 팩터 분석
+  - 웹 API: `/api/factor-analysis/<ticker>`, `/api/portfolio-analysis`
+  - 인터랙티브 팩터 분석 대시보드 탭
 - [ ] **백테스팅:** PER, PBR 등 기본적(Fundamental) 팩터를 기반으로 한 투자 전략 수립 및 성과 검증
 
 ### Phase 3: Portfolio Optimization
@@ -231,6 +240,7 @@ python server.py
 
 ### 웹 대시보드 기능
 
+#### 📊 시계열 분석 탭 (Time Series Analysis)
 - **4종류 인터랙티브 차트**
   - 가격 추이 (Area Chart)
   - 일일 수익률 분포 (Histogram)
@@ -241,23 +251,43 @@ python server.py
   - 평균 수익률, 변동성, 최소/최대값
   - 왜도(Skewness), 첨도(Kurtosis)
 
-- **의미있는 통계 인사이트** ⭐ **[NEW]**
+- **의미있는 통계 인사이트** ⭐
   - **Jarque-Bera 정규성 검정**: p-value 기반으로 "정규분포 여부" 판단
   - **왜도 해석**: "우측 꼬리" vs "좌측 꼬리" → 극단값 방향 분석
   - **첨도 해석**: "뚱뚱한 꼬리" vs "가는 꼬리" → 극한 사건 위험도 평가
   - **위험도 지표**: 95% VaR (일일 최대 손실 확률), Sharpe Ratio (수익률 대비 위험도)
 
-- **동적 종목 추가**
-  - `data_collector.py`에서 새 종목 추가 시 자동 반영
-  - 종목별로 모든 데이터가 한 페이지에 표시
+#### 📈 팩터 분석 탭 (Factor Analysis) **[NEW]**
+- **Fama-French 3-Factor 모델 분석**
+  - 개별 주식의 알파(α) 계산: 시장 팩터 조정 후 초과 수익
+  - 베타(β) 분석: 시장(Market), 규모(SMB), 가치(HML) 팩터에 대한 민감도
+  - 계수의 통계적 유의성(t-value, p-value) 표시
+  - 모델 적합도(R²) 및 조정 R² 제시
+
+- **포트폴리오 수준 분석**
+  - 다중 종목의 결합 팩터 성과 분석
+  - 팩터별 누적 수익 기여도 분석
+  - 회귀 계수의 신뢰도 평가
+
+- **색상 기반 시각화**
+  - 녹색(#27ae60): 통계적으로 유의한 팩터
+  - 회색(#95a5a6): 통계적으로 유의하지 않은 팩터
+  - 파란 해석문: 결과의 금융적 의미 설명
+
+#### 🔄 동적 종목 관리
+- `data_collector.py`에서 새 종목 추가 시 자동 반영
+- 종목별로 모든 데이터가 한 페이지에 표시
+- 새로운 종목도 실시간으로 팩터 분석 제공
 
 ### API 엔드포인트
 
 | Endpoint | 설명 | 응답 |
 |----------|------|------|
-| `GET /api/data` | 모든 종목 데이터 조회 | 전체 tickers의 통계 및 차트 데이터 |
-| `GET /api/ticker/<ticker>` | 특정 종목 데이터 조회 | 특정 ticker의 상세 데이터 |
-| `GET /` | 웹 대시보드 | index.html |
+| `GET /api/data` | 모든 종목 데이터 조회 | 전체 tickers의 통계, 차트, 팩터 분석 데이터 |
+| `GET /api/ticker/<ticker>` | 특정 종목 데이터 조회 | 특정 ticker의 시계열 분석 데이터 |
+| `GET /api/factor-analysis/<ticker>` | 특정 종목 팩터 분석 | Fama-French 3-Factor 회귀 결과 |
+| `GET /api/portfolio-analysis` | 포트폴리오 팩터 분석 | 전체 포트폴리오의 팩터 성과 분석 |
+| `GET /` | 웹 대시보드 | index.html (시계열 & 팩터 분석 대시보드) |
 
 ---
 

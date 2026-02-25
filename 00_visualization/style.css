@@ -28,6 +28,34 @@ body {
 
 .header-content h1 {
     font-size: 1.1em;
+    margin-bottom: 8px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 8px;
+}
+
+.nav-tab {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.nav-tab:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-tab.active {
+    background: #3498db;
+    border-color: #3498db;
     font-weight: 600;
 }
 
@@ -174,4 +202,80 @@ body {
 
 .refresh-btn:hover {
     background: #2980b9;
+}
+
+/* ===== 탭 컨텐츠 ===== */
+.tab-content {
+    display: block;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+/* ===== 팩터 분석 섹션 ===== */
+#factors-container {
+    padding: 12px;
+}
+
+.factor-analysis-section {
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.factor-analysis-section h3 {
+    font-size: 0.95em;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 6px;
+}
+
+.factor-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-bottom: 8px;
+}
+
+.factor-table td {
+    padding: 4px 6px;
+    border: 0.5px solid #ecf0f1;
+}
+
+.factor-table .label {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.factor-table .value {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+}
+
+.factor-significant {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.factor-insignificant {
+    color: #95a5a6;
+}
+
+.factor-interpretation {
+    background: #f0f4f7;
+    border-left: 3px solid #3498db;
+    padding: 8px;
+    margin: 8px 0;
+    font-size: 10px;
+    line-height: 1.4;
+    border-radius: 2px;
+}
+
+.factor-interpretation strong {
+    color: #2c3e50;
 }

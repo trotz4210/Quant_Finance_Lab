@@ -16,6 +16,8 @@ sys.path.insert(0, ANALYSIS_PATH)
 
 from database_manager import DatabaseManager
 from analyzer_engine import TimeSeriesAnalyzer
+from factor_model import FamaFrenchAnalyzer
+import traceback
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # CORS 활성화
@@ -100,6 +102,123 @@ def get_single_ticker(ticker):
         'data': ticker_data,
         'timestamp': datetime.now().isoformat()
     })
+
+@app.route('/api/factor-analysis/<ticker>')
+def get_factor_analysis(ticker):
+    """특정 ticker의 Fama-French 팩터 분석"""
+    try:
+        print(f"\n=== API 호출: /api/factor-analysis/{ticker} ===")
+        
+        # 모든 시장 데이터 로드
+        market_data_dict = {}
+        tickers_list = get_ticker_tables()
+        
+        with DatabaseManager(DB_PATH) as db:
+            for t in tickers_list:
+                table_name = f'{t}_daily'
+                df = db.read_dataframe(table_name)
+                if df is not None and not df.empty:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                    df = df.sort_values('Date').set_index('Date')
+                    market_data_dict[t] = df
+        
+        if ticker not in market_data_dict:
+            return jsonify({'error': f'Ticker {ticker} not found'}), 404
+        
+        # 팩터 분석 실행
+        analyzer = FamaFrenchAnalyzer(market_data_dict, risk_free_rate_annual=0.05)
+        result = analyzer.analyze_asset(ticker, market_ticker='SPY')
+        
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 400
+        
+        # 결과 정리
+        response = {
+            'ticker': ticker,
+            'alpha': float(result['results']['alpha']),
+            'betas': {
+                'MKT': float(result['results']['betas']['MKT']),
+                'SMB': float(result['results']['betas']['SMB']),
+                'HML': float(result['results']['betas']['HML']),
+            },
+            'p_values': {
+                'alpha': float(result['results']['p_values']['alpha']),
+                'MKT': float(result['results']['p_values']['MKT']),
+                'SMB': float(result['results']['p_values']['SMB']),
+                'HML': float(result['results']['p_values']['HML']),
+            },
+            'r_squared': float(result['results']['r_squared']),
+            'adj_r_squared': float(result['results']['adj_r_squared']),
+            'interpretation': result['interpretation'],
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        print(f"✓ {ticker} 팩터 분석 완료")
+        return jsonify(response), 200
+        
+    except Exception as e:
+        print(f"팩터 분석 오류: {e}")
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/portfolio-analysis')
+def get_portfolio_analysis():
+    """포트폴리오 팩터 분석 (등가중 포트폴리오)"""
+    try:
+        print(f"\n=== API 호출: /api/portfolio-analysis ===")
+        
+        # 모든 시장 데이터 로드 (SPY 제외)
+        market_data_dict = {}
+        tickers_list = [t for t in get_ticker_tables() if t != 'SPY']
+        
+        if len(tickers_list) < 2:
+            return jsonify({'error': 'Need at least 2 tickers for portfolio analysis'}), 400
+        
+        with DatabaseManager(DB_PATH) as db:
+            for t in tickers_list + ['SPY']:
+                table_name = f'{t}_daily'
+                df = db.read_dataframe(table_name)
+                if df is not None and not df.empty:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                    df = df.sort_values('Date').set_index('Date')
+                    market_data_dict[t] = df
+        
+        # 포트폴리오 분석
+        analyzer = FamaFrenchAnalyzer(market_data_dict, risk_free_rate_annual=0.05)
+        result = analyzer.analyze_portfolio(tickers_list, market_ticker='SPY')
+        
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 400
+        
+        # 결과 정리
+        response = {
+            'portfolio': result['portfolio'],
+            'weights': result['weights'],
+            'alpha': float(result['results']['alpha']),
+            'betas': {
+                'MKT': float(result['results']['betas']['MKT']),
+                'SMB': float(result['results']['betas']['SMB']),
+                'HML': float(result['results']['betas']['HML']),
+            },
+            'p_values': {
+                'alpha': float(result['results']['p_values']['alpha']),
+                'MKT': float(result['results']['p_values']['MKT']),
+                'SMB': float(result['results']['p_values']['SMB']),
+                'HML': float(result['results']['p_values']['HML']),
+            },
+            'r_squared': float(result['results']['r_squared']),
+            'adj_r_squared': float(result['results']['adj_r_squared']),
+            'interpretation': result['interpretation'],
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        print(f"✓ 포트폴리오 팩터 분석 완료")
+        return jsonify(response), 200
+        
+    except Exception as e:
+        print(f"포트폴리오 분석 오류: {e}")
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def serve_index():
